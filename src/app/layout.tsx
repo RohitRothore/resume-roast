@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Resume Roast — honest ATS critique",
   description:
     "Upload a resume, optionally add a job description, and get a constructive, specific critique with rewritten bullets.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
