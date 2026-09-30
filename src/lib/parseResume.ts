@@ -1,7 +1,15 @@
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import { MAX_FILE_BYTES } from "./constants";
 import { AppError } from "./types";
+
+// Polyfill DOMMatrix for serverless Node environment (e.g. Vercel)
+if (typeof globalThis.DOMMatrix === "undefined") {
+  // @ts-expect-error polyfill for serverless Node
+  globalThis.DOMMatrix = class DOMMatrix {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+  };
+}
 
 const PDF_TYPE = "application/pdf";
 const DOCX_TYPE =
@@ -36,7 +44,8 @@ export async function extractResumeText(file: File): Promise<string> {
       const result = await mammoth.extractRawText({ buffer });
       return result.value ?? "";
     }
-  } catch {
+  } catch (err) {
+    console.error("File extraction error:", err);
     throw new AppError(
       400,
       "We couldn't read that file. Try exporting a fresh PDF or DOCX, or paste the text instead.",
@@ -52,13 +61,8 @@ export async function extractResumeText(file: File): Promise<string> {
 }
 
 async function extractPdf(buffer: Buffer): Promise<string> {
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
-  try {
-    const result = await parser.getText();
-    return result.text ?? "";
-  } finally {
-    await parser.destroy();
-  }
+  const result = await pdfParse(buffer);
+  return result.text ?? "";
 }
 
 export function normalizeResumeText(text: string): string {
